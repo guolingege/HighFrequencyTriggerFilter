@@ -13,6 +13,7 @@
 @property (nonatomic, assign) NSTimeInterval delayTime;
 @property (nonatomic, copy) void (^triggerHandler)();
 @property (nonatomic, strong) NSTimer *timer;
+@property (nonatomic, assign) BOOL repeats;
 
 @end
 
@@ -22,6 +23,15 @@
     HighFrequencyTriggerFilter *filter = [HighFrequencyTriggerFilter new];
     filter.delayTime = delayTime;
     filter.triggerHandler = triggerHandler;
+    filter.repeats = true;
+    return filter;
+}
+
++ (instancetype)filterWithDelayTime:(NSTimeInterval)delayTime delegate:(id<HighFrequencyTriggerFilterDelegate>)delegate {
+    HighFrequencyTriggerFilter *filter = [HighFrequencyTriggerFilter new];
+    filter.delayTime = delayTime;
+    filter.delegate = delegate;
+    filter.repeats = true;
     return filter;
 }
 
@@ -35,7 +45,14 @@
     if (self.triggerHandler) {
         self.triggerHandler();
     }
-    [self cancel];
+    if (self.delegate) {
+        if ([self.delegate respondsToSelector:@selector(highFrequencyTriggerFilterFired:)]) {
+            [self.delegate highFrequencyTriggerFilterFired:self];
+        }
+    }
+    if (!self.repeats) {
+        [self cancel];
+    }
 }
 
 - (void)cancel {
